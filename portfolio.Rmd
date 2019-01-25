@@ -1,0 +1,38 @@
+---
+title: "PS811 Portfolio"
+author: "Lotem Bassan"
+output:
+  html_document: 
+    toc: true ## table of contents
+    code_folding: hide
+---
+```{r setup, include=FALSE}
+## Defaults for R chunks
+knitr::opts_chunk$set(echo = TRUE, ## echo = TRUE means code will show
+                      warning=FALSE, ## supress warnings and messages from R
+                      message=FALSE,
+                      fig.path='Figs/', ## where to save figures
+                      fig.height = 3, ## default figure size (can differ in each chunk)
+                      fig.width = 3)
+
+## Add any R packages you require. 
+## Here are some we will use in 811:
+requires <- c("tidyverse", ## tidyverse includes dplyr and ggplot2
+              "magrittr",
+              "foreign",
+              "readstata13",
+              "here")
+
+## Install any you don't have
+to_install <- c(requires %in% rownames(installed.packages()) == FALSE)
+install.packages(c(requires[to_install], "NA"), repos = "https://cloud.r-project.org/" )
+
+## Load all required R packages
+library(tidyverse)
+library(ggplot2); theme_set(theme_minimal())
+library(magrittr)
+library(here)
+```
+
+
+
