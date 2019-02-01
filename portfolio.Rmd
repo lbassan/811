@@ -2,9 +2,11 @@
 title: "PS811 Portfolio"
 author: "Lotem Bassan"
 output:
-  html_document: 
-    toc: true ## table of contents
+  pdf_document:
+    toc: yes
+  html_document:
     code_folding: hide
+    toc: yes
 ---
 ```{r setup, include=FALSE}
 ## Defaults for R chunks
@@ -35,4 +37,28 @@ library(here)
 ```
 
 
+##Potential Research Interests:
 
+Human Rights violations and International Organizations/Institutions
+
+Investment regime/institution and Democracy
+
+Naming and Shaming and Human Rights violations (NGOs and socialization theory)
+
+Reputation/credibility and Human rights violations
+
+Western identity in Israel
+
+Nationalism and the willingness to join international organizations
+
+##Potential Datasets:
+
+Cirnagelli Richards (CIRI) - Human Rights violations
+
+State Credit Ratings (Blumberg)
+
+Polity II - Democracy index
+
+IIAs coded by UNCTAD codebook (Original Dataset)
+
+'West' in 277 Knesset Members speeches (Israel) (Original Dataset)
