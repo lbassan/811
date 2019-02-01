@@ -1,0 +1,87 @@
+---
+title: "Data Exercise 1 (PS813)"
+author: "Lotem Bassan"
+date: "1/27/2019"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+#Uploading dataset in STATA
+I begin by uploading the dataset using the net install command in STATA:
+
+```{r}
+#net install PS813_EX1, from(https://faculty.polisci.wisc.edu/weimer)
+
+##checking PS813_EX1 consistency and verifying not already installed...
+##installing into u:\ado\plus\...
+##installation complete.
+
+#PS813_EX1 3451
+
+#saveold "\\Desktop\Grad School\courses\PS813\Rwork\PS1.dta"
+##(saving in Stata 12 format, which can be read by Stata 11 or 12)
+##file \\Desktop\Grad School\courses\PS813\Rwork\PS1.dta saved
+```
+
+#Uploading the file in R
+I set the working directory in R and upload the .dta file:
+```{r}
+setwd("~/Desktop/Grad School/courses/PS813/Rwork")
+library(foreign)
+PS1Data <- read.dta("PS1.dta")
+```
+
+#Rough Plot of the data
+```{r}
+plot(PS1Data$terms, PS1Data$Leg_Act, 
+     xlab = "Number of terms in office", 
+     ylab= "Legislative activity of state assembly members", 
+     cex.lab = 0.8, cex.axis= 0.8, pch=20)
+```
+
+#Correlation
+Compute correlation between variables:
+```{r}
+cor(PS1Data$terms, PS1Data$Leg_Act)
+```
+
+#Regression
+Regress Leg_Act on terms:
+```{r}
+fit <- lm(Leg_Act ~ terms, data = PS1Data)
+summary(fit)
+```
+
+
+
+#Residuals
+First, I create a separate variable for the predicted values using the previous model and the predict() function:
+```{r}
+PS1Data$p_Leg_Act <- predict(fit)
+```
+
+Second, I calculate the residuals as the difference beteen the observed andpredicted values of the dependent variable:
+```{r}
+PS1Data$Residuals <- PS1Data$Leg_Act - PS1Data$p_Leg_Act
+```
+
+Subsequently, I plot the residuals against the independent variable:
+```{r}
+plot(PS1Data$terms, PS1Data$Residuals, 
+     xlab = "Number of terms in office", 
+     ylab= "Residuals", 
+     cex.lab = 0.8, cex.axis= 0.8, pch=20)
+```
+
+In order to get the correlation of the observed and predicted values of the dependent variable, I use the cor() function:
+```{r}
+correlation <- cor(PS1Data$Leg_Act, PS1Data$p_Leg_Act)
+correlation
+```
+
+I now square the correlation coefficient compare to the reported $R^2$:
+```{r}
+correlation*correlation
+```
