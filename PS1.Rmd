@@ -8,6 +8,10 @@ output:
     df_print: paged
 ---
 
+<!-- Typically, we start with a chunk that loads packages (and installs any that are needed) and sets any defaults (e.g. fig.height). 
+As written, this script will only run on a machine that already has several packages installed, which is fine for homework, but not it is not portable.
+--> 
+
 #Uploading dataset in STATA
 I begin by uploading the dataset using the net install command in STATA:
 
@@ -24,6 +28,7 @@ I begin by uploading the dataset using the net install command in STATA:
 ##(saving in Stata 12 format, which can be read by Stata 11 or 12)
 ##file \\Desktop\Grad School\courses\PS813\Rwork\PS1.dta saved
 ```
+<!-- Making an R chunk and then using comments is a fine hack, but a chunk with no engine ```{} is simpler and prittier.-->
 
 #Uploading the file in R
 I set the working directory in R and upload the .dta file:
@@ -32,6 +37,12 @@ setwd("~/Desktop/Grad School/courses/PS813/Rwork")
 library(foreign)
 PS1Data <- read.dta("PS1.dta")
 ```
+<!-- I'm glad you have a project folder for 813. 
+If you are using it as an R Studio project, switching (File->Open Project) to PS813 will automatically change your working directory. 
+Then your file paths can just be "Rwork/PS1.dta"--More importantly, no one else has your same file paths. 
+That is why we want to kill the habbit of using setwd(). When I see setwd() in replication files, I know I am in for hours of pain. Everything should be written from the perspective of your project folder, so that anyone with that folder can run all of the files in it.
+The here() function makes paths work. For example, let's say this script is saved in /Rwork but your data are in /data as they should be. here("data/PS1.dta") will always work.-->
+
 
 #Rough Plot of the data
 ```{r}
@@ -40,6 +51,13 @@ plot(PS1Data$terms, PS1Data$Leg_Act,
      ylab= "Legislative activity of state assembly members", 
      cex.lab = 0.8, cex.axis= 0.8, pch=20)
 ```
+<!-- This works, but ggplot is so much more versitile. Little stuff like this can be an chance to practice.
+ggplot(PS1Data) + 
+aes(x = terms, y = Leg_Act) + 
+geom_point() +
+labs(x = "Number of terms in office", 
+     y = "Legislative activity of state assembly members")
+ -->
 
 #Correlation
 Compute correlation between variables:
@@ -61,6 +79,7 @@ First, I create a separate variable for the predicted values using the previous 
 ```{r}
 PS1Data$p_Leg_Act <- predict(fit)
 ```
+<!-- Nicely done keeping it tidy in the data frame. :) -->
 
 Second, I calculate the residuals as the difference beteen the observed andpredicted values of the dependent variable:
 ```{r}
@@ -74,14 +93,19 @@ plot(PS1Data$terms, PS1Data$Residuals,
      ylab= "Residuals", 
      cex.lab = 0.8, cex.axis= 0.8, pch=20)
 ```
+<!-- The name of a chunk is the name of the figures it produces. 
+You could name this {r residuals, fig.height = 3}
 
 In order to get the correlation of the observed and predicted values of the dependent variable, I use the cor() function:
 ```{r}
 correlation <- cor(PS1Data$Leg_Act, PS1Data$p_Leg_Act)
 correlation
 ```
+The correlation is `r correlation`.
 
 I now square the correlation coefficient compare to the reported $R^2$:
 ```{r}
 correlation*correlation
 ```
+<!-- No need for a chunk! -->
+The correlation squared is `r correlation*correlation`.
