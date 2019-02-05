@@ -14,6 +14,7 @@ As written, this script will only run on a machine that already has several pack
 
 #Uploading dataset in STATA
 I begin by uploading the dataset using the net install command in STATA:
+<!-- I could not run this because the data file was not added to this folder.--> 
 
 ```{r}
 #net install PS813_EX1, from(https://faculty.polisci.wisc.edu/weimer)
@@ -94,7 +95,7 @@ plot(PS1Data$terms, PS1Data$Residuals,
      cex.lab = 0.8, cex.axis= 0.8, pch=20)
 ```
 <!-- The name of a chunk is the name of the figures it produces. 
-You could name this {r residuals, fig.height = 3}
+You could name this {r residuals, fig.height = 3} -->
 
 In order to get the correlation of the observed and predicted values of the dependent variable, I use the cor() function:
 ```{r}
