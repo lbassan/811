@@ -32,12 +32,9 @@ library(magrittr)
 library(here)
 library(dplyr)
 library(tidyr)
-
-#Working directory
-setwd("~/lotembassan/811")
+library(foreign)
 
 #Upload dataset
-library(foreign)
 CIRI <- read.csv("CIRI.csv", header = TRUE, stringsAsFactors = TRUE)
 ```
 
@@ -49,7 +46,7 @@ I will be looking at three different human rights violations, embodied in a numb
 
 I begin by cleaning the data:
 
-```{r missing values, include=FALSE}
+```{r missing values}
 #Political Killings:
 CIRI$KILL[CIRI$KILL==-999] <- NA
 CIRI$KILL[CIRI$KILL==-77] <- NA
@@ -66,7 +63,7 @@ CIRI$SPEECH[CIRI$SPEECH==-66] <- NA
 
 Now, we can use the summarise() function to observe some of the variation in the variables. As mentioned in the previous paragraph, larger numbers will indicate less violations, while smaller numbers indicate frequent violations.
 
-```{r summary Killings, include=FALSE}
+```{r summary Killings}
 
 CIRI%>%
   filter(!is.na(KILL))%>%
@@ -78,7 +75,7 @@ CIRI%>%
 Unsurprisingly, we learn that undemocratic countries (such as Afghanistan) receive low scores and do not conform with the international norms, while democratic countries such as Austria, receive higher scores.
 
 We observe similar trends with torture and speech:
-```{r summary Torture and Speech, include=FALSE}
+```{r summary Torture and Speech}
 #Torture
 CIRI%>%
   filter(!is.na(TORT))%>%
