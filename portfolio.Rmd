@@ -52,6 +52,11 @@ Western identity in Israel
 Nationalism and the willingness to join international organizations
 
 ##Potential Datasets:
+<!-- All of these look like solid options! 
+If you have speech texts and want to get started on basic text analysis, let's talk. 
+One easy, fun exercise is to make word clouds comparing two groups: https://judgelord.github.io/text/examples 
+However, to select a real analytic method, we need a question! :)
+- Devin -->
 
 Cirnagelli Richards (CIRI) - Human Rights violations
 
