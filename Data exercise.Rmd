@@ -1,5 +1,5 @@
 ---
-title: "CIRI dataset exercise"
+title: "CIRI Dataset Exercise"
 author: "Lotem Bassan"
 date: "2/13/2019"
 output: pdf_document
