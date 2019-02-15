@@ -1,0 +1,97 @@
+---
+title: "CIRI dataset exercise"
+author: "Lotem Bassan"
+date: "2/13/2019"
+output: pdf_document
+---
+```{r setup, include=FALSE}
+## Defaults for R chunks
+knitr::opts_chunk$set(echo = TRUE, ## echo = TRUE means code will show
+                      warning=FALSE, ## supress warnings and messages from R
+                      message=FALSE,
+                      fig.path='Figs/', ## where to save figures
+                      fig.height = 3, ## default figure size (can differ in each chunk)
+                      fig.width = 3)
+
+## Add any R packages you require. 
+## Here are some we will use in 811:
+requires <- c("tidyverse", ## tidyverse includes dplyr and ggplot2
+              "magrittr",
+              "foreign",
+              "readstata13",
+              "here")
+
+## Install any you don't have
+to_install <- c(requires %in% rownames(installed.packages()) == FALSE)
+install.packages(c(requires[to_install], "NA"), repos = "https://cloud.r-project.org/" )
+
+## Load all required R packages
+library(tidyverse)
+library(ggplot2); theme_set(theme_minimal())
+library(magrittr)
+library(here)
+library(dplyr)
+library(tidyr)
+
+#Working directory
+setwd("~/lotembassan/811")
+
+#Upload dataset
+library(foreign)
+CIRI <- read.csv("CIRI.csv", header = TRUE, stringsAsFactors = TRUE)
+```
+
+#CIRI Human Rights Data Project
+
+In this short exercise I will explore some of the values collected in the CIRI Human Rights Data Project. This dataset is one of the most prominent and commonly used datasets when testing human rights violations in IR. It contains standards-based quantitative information on government respect for 15 internationally recognized human rights for 202 countries, annually from 1981-2011
+
+I will be looking at three different human rights violations, embodied in a number of International treaties: Political killings or unlawful deprivation of life, torture and abuse and freedom of speech. Variables are coded from 0 to 2, where 0 indicates that the norm is frequently violated (ie. frequent political killings and torture or complete government censorship of media), 1 indicates occasional violations and 2 indicates no reported violations.
+
+I begin by cleaning the data:
+
+```{r missing values, include=FALSE}
+#Political Killings:
+CIRI$KILL[CIRI$KILL==-999] <- NA
+CIRI$KILL[CIRI$KILL==-77] <- NA
+CIRI$KILL[CIRI$KILL==-66] <- NA
+#Torture:
+CIRI$TORT[CIRI$TORT==-999] <- NA
+CIRI$TORT[CIRI$TORT==-77] <- NA
+CIRI$TORT[CIRI$TORT==-66] <- NA
+#Freedom of speech:
+CIRI$SPEECH[CIRI$SPEECH==-999] <- NA
+CIRI$SPEECH[CIRI$SPEECH==-77] <- NA
+CIRI$SPEECH[CIRI$SPEECH==-66] <- NA
+```
+
+Now, we can use the summarise() function to observe some of the variation in the variables. As mentioned in the previous paragraph, larger numbers will indicate less violations, while smaller numbers indicate frequent violations.
+
+```{r summary Killings, include=FALSE}
+
+CIRI%>%
+  filter(!is.na(KILL))%>%
+  group_by(CTRY)%>%
+  summarise(count_KILL=sum(KILL))%>%
+  complete(CTRY)
+```
+
+Unsurprisingly, we learn that undemocratic countries (such as Afghanistan) receive low scores and do not conform with the international norms, while democratic countries such as Austria, receive higher scores.
+
+We observe similar trends with torture and speech:
+```{r summary Torture and Speech, include=FALSE}
+#Torture
+CIRI%>%
+  filter(!is.na(TORT))%>%
+  group_by(CTRY)%>%
+  summarise(count_TORT=sum(TORT))%>%
+  complete(CTRY)
+
+#Speech
+CIRI%>%
+  filter(!is.na(SPEECH))%>%
+  group_by(CTRY)%>%
+  summarise(count_SPEECH=sum(SPEECH))%>%
+  complete(CTRY)
+```
+
+Indeed, we observe a similar trend. We may want to test in the future, using other datasets, whether there are other variations worth exploring (for example, why do some non-democracies or new democracies violate these rights more frequently than others?, one explanation is the treaties and organizations they are members of, others is whether or not they are frequently targeted by NGOs). 
