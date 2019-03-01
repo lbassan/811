@@ -53,5 +53,27 @@ for(pagenumber in 1:1000) {
 
 save(survey_dates, file = here("data/survey_dates.Rdata"))
 
+# FIXME
 ## unzip not working, idk why
+## for(i in list.files(here("files") ) )...
 unzip(here("data/p1201_Hebrew.zip"), exdir = here("data"))
+# /FIXME
+
+
+## https://www.r-bloggers.com/how-to-open-an-spss-file-into-r/
+## init with any random file
+d <- read.spss(here("files/p1012_Hebrew.sav" ), to.data.frame=TRUE)
+
+sav.files <- unique(str_extract( list.files(here("files")), ".*sav"))
+
+# for(i in sav.files) {
+for(i in sav.files[3]){
+d %>% full_join(read.spss(here("files", i), 
+                          to.data.frame=TRUE))
+}
+
+peace_index <- d
+save(peace_index, file = "peace_index.Rdata")
+
+
+
