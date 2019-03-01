@@ -34,36 +34,59 @@ library(tidyverse)
 library(ggplot2); theme_set(theme_minimal())
 library(magrittr)
 library(here)
+
+#Upload dataset
+CIRI <- read.csv("dataset/CIRI.csv", header = TRUE, stringsAsFactors = TRUE)
 ```
 
 
-##Potential Research Interests:
+```{r missing values}
+CIRI %<>% 
+  mutate(KILL = ifelse(KILL %in% c(-999,-77,-66), NA, KILL)) %>%
+  mutate(TORT = ifelse(TORT %in% c(-999,-77,-66), NA, TORT)) %>%
+  mutate(SPEECH = ifelse(SPEECH %in% c(-999,-77,-66), NA, SPEECH))
+```
 
-Human Rights violations and International Organizations/Institutions
+```{r summary-stats}
+d  <- CIRI 
 
-Investment regime/institution and Democracy
+d %<>% 
+  group_by(CTRY)%>%  
+  mutate(mean_KILL = mean(KILL, na.rm = T),
+         mean_TORT = mean(TORT, na.rm = T),
+         mean_SPEECH = mean(SPEECH, na.rm = T) )
 
-Naming and Shaming and Human Rights violations (NGOs and socialization theory)
+glimpse(d)
 
-Reputation/credibility and Human rights violations
+d1 <- d %>% 
+  select(CTRY, POLITY, mean_KILL, mean_TORT, mean_SPEECH) %>% 
+  distinct() 
 
-Western identity in Israel
+glimpse(d1)
+```
 
-Nationalism and the willingness to join international organizations
+The correlation between Polity score and freedom from speech violations is 
+`r cor(d1$POLITY, d1$mean_SPEECH, use="complete.obs") `.
+The correlation between Polity score and freedom from torture violations is 
+`r cor(d1$POLITY, d1$mean_TORT, use="complete.obs") `
+The correlation between Polity score and freedom from political killings is 
+`r cor(d1$POLITY, d1$mean_KILL, use="complete.obs")`
 
-##Potential Datasets:
-<!-- All of these look like solid options! 
-If you have speech texts and want to get started on basic text analysis, let's talk. 
-One easy, fun exercise is to make word clouds comparing two groups: https://judgelord.github.io/text/examples 
-However, to select a real analytic method, we need a question! :)
-- Devin -->
+```{r scatterplot-Torture-Speech, fig.width=8}
+d1 %>%
+  ggplot() + 
+  aes(x = mean_SPEECH, 
+      y = mean_TORT, 
+      color = mean_KILL, 
+      size = POLITY, 
+      label = CTRY) + 
+  geom_point(alpha = .3) + 
+  geom_text(check_overlap = T, 
+            size = 4)+
+  labs(x = "Freedom of Speech",
+       y = "Freedom from Torture",
+       color = "Freedom from Political Killings")
+```
 
-Cirnagelli Richards (CIRI) - Human Rights violations
 
-State Credit Ratings (Blumberg)
 
-Polity II - Democracy index
-
-IIAs coded by UNCTAD codebook (Original Dataset)
-
-'West' in 277 Knesset Members speeches (Israel) (Original Dataset)

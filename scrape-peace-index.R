@@ -1,13 +1,13 @@
+source(here::here("setup.R"))
 library(rvest)
 library(httr)
 library(jsonlite)
-testurl <- "http://www.peaceindex.org/indexYearsEng.aspx?num=19"
 
 # text page
 pagenumber <- 270
 
 # when it is working, change this to for(pagenumber in 1:400) {
-for(pagenumber in 270) {
+for(pagenumber in 275) {
   for(i in 1:12){
     # when this works, wrap everything in tryCatch() to skip over errors
 #  tryCatch(
@@ -15,14 +15,14 @@ for(pagenumber in 270) {
       "http://www.peaceindex.org/indexMonthEng.aspx?num=",
       pagenumber,
       "&monthname=",
-      month.name[i]
+      month.name[5]
     )
     url
     
     # DEALING WITH HTML
     d <- GET(url)
     
-    html <- content(d, as = "text")
+    html <- httr::content(d, as = "text")
     # Is there even a file in that html content? 
     str_extract(html, "fileToDownload.*")
     
