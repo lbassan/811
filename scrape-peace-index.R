@@ -3,47 +3,55 @@ library(rvest)
 library(httr)
 library(jsonlite)
 
-# text page
+# init a blank data frame to put survey dates in
+survey_dates <- tibble(file = "", survey = "")
+
+# test page
 pagenumber <- 270
 
-# when it is working, change this to for(pagenumber in 1:400) {
-for(pagenumber in 275) {
+# change this to for(pagenumber in 1:400) {
+for(pagenumber in 1:1000) {
   for(i in 1:12){
-    # when this works, wrap everything in tryCatch() to skip over errors
-#  tryCatch(
+    ## define url
     url <- paste0(
       "http://www.peaceindex.org/indexMonthEng.aspx?num=",
       pagenumber,
       "&monthname=",
-      month.name[5]
+      month.name[i]
     )
-    url
+    print(url)
     
     # DEALING WITH HTML
-    d <- GET(url)
+    html_raw <- GET(url)
+    html_text <- httr::content(html_raw, as = "text")
     
-    html <- httr::content(d, as = "text")
     # Is there even a file in that html content? 
-    str_extract(html, "fileToDownload.*")
+    print(str_extract_all(html_text, "fileToDownload.*"))
     
-    file <- html %>%
+    file <- html_text %>%
       str_extract("fileToDownload=\".*?\"") %>%
-      str_remove("fileToDownload=") %>%
+      str_remove("fileToDownload=\"files.") %>%
       str_remove_all("\"") %>% 
       str_replace(" ", "%20")
     
-    # FIXME
-    survey <- html %>%
-      str_extract("Survey dates:.")
-    # /FIXME
+    survey <- html_text %>%
+      str_extract("Survey dates:.*<") %>% 
+      str_remove("<") %>% 
+      str_remove("Survey dates:")
+    print(survey)
+    # merge with survey date records 
+    survey_dates %<>% full_join(tibble(file = file, survey = survey))
     
     file.url <- paste0("http://www.peaceindex.org/", file)
     
-    # only download if we don't have it already
-    if(!str_remove(file, "files/") %in% list.files(path = here("files") ) ){
-    download.file(file.url, destfile = file)
+    # only download if it exists and we don't have it already
+    if(!is.na(file) & !file %in% list.files(path = here("files") ) ){
+    download.file(file.url, destfile = here("files", file) )
     }
 }
 }
 
+save(survey_dates, file = here("data/survey_dates.Rdata"))
 
+## unzip not working, idk why
+unzip(here("data/p1201_Hebrew.zip"), exdir = here("data"))
