@@ -73,7 +73,7 @@ d %>% full_join(read.spss(here("files", i),
 }
 
 peace_index <- d
-save(peace_index, file = "peace_index.Rdata")
+save(peace_index, file = here("data/peace_index.Rdata"))
 
 
 

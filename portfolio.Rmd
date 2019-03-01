@@ -91,3 +91,16 @@ d1 %>%
 #Question about ggplot:
 How do you plot two graphs in the same figure with two Y axis?
 
+
+```{r facets}
+# Facets are one way to plot two graphs in the same figure. The axes however, will be pretty much the same, as the point is to compare subsets. If you want to get into more advance arranging of different plots, google "grobs" (but messing with grobs is often a pain and usually not necessary). Here is a facet plot of a random survey question. For sure not the best way to show these data:
+load(here("data/peace_index.Rdata"))
+d <- peace_index
+
+d %>% 
+  ggplot( aes(x = Date, y = Q22)) +
+  geom_jitter( alpha = .5) + 
+  facet_grid(. ~ migzar)
+
+```
+
