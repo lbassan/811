@@ -88,5 +88,6 @@ d1 %>%
        color = "Freedom from Political Killings")
 ```
 
-
+#Question about ggplot:
+How do you plot two graphs in the same figure with two Y axis?
 
