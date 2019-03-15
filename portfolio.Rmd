@@ -34,57 +34,42 @@ library(tidyverse)
 library(ggplot2); theme_set(theme_minimal())
 library(magrittr)
 library(here)
+library(car)
 
 #Upload dataset
-CIRI <- read.csv("dataset/CIRI.csv", header = TRUE, stringsAsFactors = TRUE)
+June06 <- read.spss("files/p0601_English.sav", to.data.frame=TRUE)
 ```
 
 
-```{r missing values}
-CIRI %<>% 
-  mutate(KILL = ifelse(KILL %in% c(-999,-77,-66), NA, KILL)) %>%
-  mutate(TORT = ifelse(TORT %in% c(-999,-77,-66), NA, TORT)) %>%
-  mutate(SPEECH = ifelse(SPEECH %in% c(-999,-77,-66), NA, SPEECH))
+```{r recoding variables}
+#missing values
+June06 %<>%
+  mutate(educ = ifelse(educ %in% c(6,7), NA, educ))%>%
+  mutate(v19 = ifelse(v19 %in% c(5,6,7), NA, v19))%>%
+  mutate(v76 = ifelse(v76 %in% c(14, 15, 16, 17), NA, v76))
+
+#recoding direction of peace and right-left spectrum  
+June06$Peace <- recode(June06$v19, '1=4; 2=3; 3=2; 4=1')
+June06$RightLeft <- recode(June06$v76, '13=1;12=2;11=3;4=4;7=5;1=6;8=7;2=8;3=9;5=10;6=11;10=12;9=13')
+
 ```
 
-```{r summary-stats}
-d  <- CIRI 
-
-d %<>% 
-  group_by(CTRY)%>%  
-  mutate(mean_KILL = mean(KILL, na.rm = T),
-         mean_TORT = mean(TORT, na.rm = T),
-         mean_SPEECH = mean(SPEECH, na.rm = T) )
-
-glimpse(d)
-
-d1 <- d %>% 
-  select(CTRY, POLITY, mean_KILL, mean_TORT, mean_SPEECH) %>% 
-  distinct() 
-
-glimpse(d1)
-```
-
-The correlation between Polity score and freedom from speech violations is 
-`r cor(d1$POLITY, d1$mean_SPEECH, use="complete.obs") `.
-The correlation between Polity score and freedom from torture violations is 
-`r cor(d1$POLITY, d1$mean_TORT, use="complete.obs") `
-The correlation between Polity score and freedom from political killings is 
-`r cor(d1$POLITY, d1$mean_KILL, use="complete.obs")`
-
-```{r scatterplot-Torture-Speech, fig.width=8}
-d1 %>%
+```{r scatterplot- Peace Index}
+d  <- June06
+d %>%
   ggplot() + 
-  aes(x = mean_SPEECH, 
-      y = mean_TORT, 
-      color = mean_KILL, 
-      size = POLITY, 
-      label = CTRY) + 
-  geom_point(alpha = .3) + 
-  geom_text(check_overlap = T, 
+  aes(x = RightLeft, 
+      y = Peace, 
+      color = age,
+      label = NaN) + 
+  geom_point(alpha = .2) + 
+  geom_jitter(aes(colour=age), width = 0.5, height=0.5)+
+  geom_text(check_overlap = F, 
             size = 4)+
-  labs(x = "Freedom of Speech",
-       y = "Freedom from Torture",
-       color = "Freedom from Political Killings")
+  labs(title="Peace Index")+
+  theme(plot.title = element_text(hjust = 0.5))+
+  labs(x = "Right-Left political affiliation",
+       y = "Peace Attitude",
+       color = "Age")
 ```
 
