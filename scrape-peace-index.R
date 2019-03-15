@@ -3,7 +3,10 @@ library(rvest)
 library(httr)
 library(jsonlite)
 
-# text page
+# init a blank data frame to put survey dates in
+survey_dates <- tibble(file = "", survey = "")
+
+# test page
 pagenumber <- 270
 
 # when it is working, change this to for(pagenumber in 1:400) {
@@ -17,26 +20,29 @@ for(pagenumber in 1:400) {
       "&monthname=",
       month.name[i]
     )
-    url
+    print(url)
     
     # DEALING WITH HTML
-    d <- GET(url)
+    html_raw <- GET(url)
+    html_text <- httr::content(html_raw, as = "text")
     
-    html <- httr::content(d, as = "text")
     # Is there even a file in that html content? 
-    str_extract(html, "fileToDownload.*")
+    print(str_extract_all(html_text, "fileToDownload.*"))
     
-    file <- html %>%
+    file <- html_text %>%
       str_extract("fileToDownload=\".*?\"") %>%
-      str_remove("fileToDownload=") %>%
+      str_remove("fileToDownload=\"files.") %>%
       str_remove_all("\"") %>% 
       str_replace(" ", "%20") %>% 
       str_replace("Hebrew", "English")
     
-    # FIXME
-    survey <- html %>%
-      str_extract("Survey dates:.")
-    # /FIXME
+    survey <- html_text %>%
+      str_extract("Survey dates:.*<") %>% 
+      str_remove("<") %>% 
+      str_remove("Survey dates:")
+    print(survey)
+    # merge with survey date records 
+    survey_dates %<>% full_join(tibble(file = file, survey = survey))
     
     file.url <- paste0("http://www.peaceindex.org/", file)
     
@@ -46,5 +52,30 @@ for(pagenumber in 1:400) {
     }, error = function(e) e)
 }
 }
+
+save(survey_dates, file = here("data/survey_dates.Rdata"))
+
+# FIXME
+## unzip not working, idk why
+## for(i in list.files(here("files") ) )...
+unzip(here("data/p1201_Hebrew.zip"), exdir = here("data"))
+# /FIXME
+
+
+## https://www.r-bloggers.com/how-to-open-an-spss-file-into-r/
+## init with any random file
+d <- read.spss(here("files/p1012_Hebrew.sav" ), to.data.frame=TRUE)
+
+sav.files <- unique(str_extract( list.files(here("files")), ".*sav"))
+
+# for(i in sav.files) {
+for(i in sav.files[3]){
+d %>% full_join(read.spss(here("files", i), 
+                          to.data.frame=TRUE))
+}
+
+peace_index <- d
+save(peace_index, file = here("data/peace_index.Rdata"))
+
 
 

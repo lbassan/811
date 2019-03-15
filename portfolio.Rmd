@@ -35,6 +35,7 @@ library(ggplot2); theme_set(theme_minimal())
 library(magrittr)
 library(here)
 library(car)
+library(foreign)
 
 #Upload dataset
 June06 <- read.spss("files/p0601_English.sav", to.data.frame=TRUE)
@@ -54,7 +55,7 @@ June06$RightLeft <- recode(June06$v76, '13=1;12=2;11=3;4=4;7=5;1=6;8=7;2=8;3=9;5
 
 ```
 
-```{r scatterplot- Peace Index}
+```{r scatterplot- Peace Index, fig.width=8, fig.align="center"}
 d  <- June06
 d %>%
   ggplot() + 
