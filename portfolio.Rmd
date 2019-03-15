@@ -2,10 +2,10 @@
 title: "PS811 Portfolio"
 author: "Lotem Bassan"
 output:
-  pdf_document:
-    toc: yes
   html_document:
     code_folding: hide
+    toc: yes
+  pdf_document:
     toc: yes
 ---
 ```{r setup, include=FALSE}
@@ -87,7 +87,4 @@ d1 %>%
        y = "Freedom from Torture",
        color = "Freedom from Political Killings")
 ```
-
-#Question about ggplot:
-How do you plot two graphs in the same figure with two Y axis?
 

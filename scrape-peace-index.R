@@ -7,15 +7,15 @@ library(jsonlite)
 pagenumber <- 270
 
 # when it is working, change this to for(pagenumber in 1:400) {
-for(pagenumber in 275) {
+for(pagenumber in 1:400) {
   for(i in 1:12){
     # when this works, wrap everything in tryCatch() to skip over errors
-#  tryCatch(
+  #tryCatch(
     url <- paste0(
       "http://www.peaceindex.org/indexMonthEng.aspx?num=",
       pagenumber,
       "&monthname=",
-      month.name[5]
+      month.name[i]
     )
     url
     
@@ -30,7 +30,8 @@ for(pagenumber in 275) {
       str_extract("fileToDownload=\".*?\"") %>%
       str_remove("fileToDownload=") %>%
       str_remove_all("\"") %>% 
-      str_replace(" ", "%20")
+      str_replace(" ", "%20") %>% 
+      str_replace("Hebrew", "English")
     
     # FIXME
     survey <- html %>%
@@ -40,9 +41,9 @@ for(pagenumber in 275) {
     file.url <- paste0("http://www.peaceindex.org/", file)
     
     # only download if we don't have it already
-    if(!str_remove(file, "files/") %in% list.files(path = here("files") ) ){
+    tryCatch(if(!str_remove(file, "files/") %in% list.files(path = here("files") ) ){
     download.file(file.url, destfile = file)
-    }
+    }, error = function(e) e)
 }
 }
 
