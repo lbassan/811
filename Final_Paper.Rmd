@@ -1,0 +1,361 @@
+---
+title: "Trust in the Court system and Religiosity in Israel"
+author: "Lotem Bassan"
+date: "5/1/2019"
+output:
+  pdf_document: default
+  word_document: default
+indent: yes
+header-includes:
+- \usepackage{setspace}\doublespacing
+- \usepackage{float}
+---
+```{r setup, include=FALSE}
+## Sets defaults for R chunks
+knitr::opts_chunk$set(echo = TRUE, # echo = TRUE means that your code will show
+                      warning=FALSE,
+                      message=FALSE,
+                      fig.path='figs/', ## where to save figures
+                      fig.height = 3,
+                      fig.width = 4,
+                      fig.align = 'center')
+## Add any R packages you require. 
+## Here are some we will use in 811:
+requires <- c("tidyverse", # tidyverse includes dplyr and ggplot2
+              "broom",
+              "haven",
+              "devtools",
+              "magrittr",
+              "margins",
+              "lmtest",
+              "here")
+## Install any you don't have
+to_install <- c(!requires %in% rownames(installed.packages()))
+install.packages(c(requires[to_install], "NA"), repos = "https://cloud.r-project.org/" )
+## Load all required R packages
+library(tidyverse)
+library(broom)
+library(haven)
+library(magrittr)
+library(margins)
+library(here)
+library(AUC)
+library(Amelia)
+library(InformationValue)
+library(ggplot2); theme_set(theme_bw()) # global plot theme
+## Colorblind and greyscale print-friendly scales
+  options(
+    ggplot2.continuous.color = "viridis",
+    ggplot2.continuous.fill = "viridis"
+  )
+  scale_color_discrete <- function(...)
+    scale_color_viridis_d(..., begin = 0, end = .7)
+  scale_fill_discrete <- function(...)
+    scale_fill_viridis_d(..., begin = 0, end = .7)
+```
+
+```{r, include=FALSE}
+#Setting working directory and uploading data frame:
+library(foreign)
+Democracy_Index <- read.dta("dem3.dta")
+```
+
+**Does religiosity affect institutional trust?** Previous research suggests that since religious individuals value submission to transcendental authority, they tend to be more trusting of other institutions as well (Devos, Spini & Schwartz, 2002; Marien & Hooghe, 2011). However, these works often study samples from the United States and Europe, where religiosity is typically measured with respect to Christian followers. It is unclear then, that this relationship persists in other contexts and religions. 
+
+In this paper I revisit the relationship between religiosity and institutional trust, looking at the case of Israel. I propose an alternative hypothesis, where religious Jews do not trust judicial instutions of the state, as they tend to rely on their own rabbinical courts instead. I test this hypothesis on a survey sample collected by the Isaeli Democracy Institute in 2017. Controlling for ideology and wage, I create a logistic regression model and show that religiosity in Israel has a negative and statistically significant effect on trust in the the court system.
+
+Institutional trust can be understood as an evaluative orientation towards an authority held by the state. Various factors may affect the levels of trust in a political authority. Previous scholarship on trust in Israel has focused on external factors, such as the media (Tsfati et al, 2009), rather than “internal factors”, namely sociological and psychological characteristics of individuals. Over the past decade, Israel has suffered from relatively low institutional trust, especially in the court system and the supreme court (Arian et al, 2007; Hermann et al, 2013). It is therefore of interest to examine this question within this context.
+
+I hypothesize that religiosity is negatively associated with trust in the court in Israel, as the court system may be undermined by religious legal institutions ('Beth Din'), which are often used to resolve private disputes in Orthodox communities. I control for ideology, as it has been shown that more liberal individuals tend to be more trusting of the court. In Israel, where there are no Juries in the justice system, judges have far more power and are often criticized for being too liberal or "Left-Wing", especially when ruling with respect to issues of Security (Israel-Palestinian conflict). Hence, I expect to find a similar relationship. Finally, since the survey does not provide information on locality of respondents, I use wage as a proxy. I conjecture that respondents who earn below the national average household income are more likely to live in areas where crime is more persistent. Hence, they will be more likely to distrust the court system. 
+
+##Hypotheses
+* H1: Religiosity effects individuals' trust in the court system in Israel.
+* H0: Religiosity does not effect indivials' trust in the court system in Israel.
+
+#Data
+The analysis of this paper is based on the Israeli Democracy Index of 2017. The index is conducted annually by the Israeli Democracy Institute’s Guttman Center for Surveys\footnote{https://en.idi.org.il}. The Index is used to identify areas that need to be improved and enhanced in the Israeli democratic culture and regime. The sample size of the index consists of 854 interviewees. In order to conduct the analysis, I recoded some of the data.
+
+##Dependent variable
+Respondents were asked if they trust the court system in Israel. The data was recoded so that the value 0 indicates "no trust" while the value 1 indicates "trust". Answers of "Don't Know" and "Refuse" were recoded into missing values (67 missing values in total). When we look at the descriptive statistic of this variable, we learn that 63 percent of respondents reviewed the court system favorably, while 37 percent reviewed it negatively. 
+
+```{r Recoding Dependent Variable, echo=FALSE}
+#Deleting Arab respondents from dataset:
+d1 <- subset(Democracy_Index, Democracy_Index$Q1c!="Arab")
+#Create new variable for trust in Supreme Court as.numeric
+d1$Trust_court <- as.numeric(d1$Q6_2)
+#Mark irrelevant answers as NA
+d1$Trust_court[d1$Trust_court == 5] <- NA
+#Recode new variable, "Court" which indicates trust=1, no trust=0
+d1$Court <- d1$Trust_court
+d1$Court[d1$Court == 1] <- 0
+d1$Court[d1$Court == 2] <- 0
+d1$Court[d1$Court == 3] <- 1
+d1$Court[d1$Court == 4] <- 1
+```
+
+```{r}
+#Table Court
+table(d1$Court)
+```
+
+##Independent Variables
+The analysis includes three independent variables that may be associated with trust in the court system: Religiosity, Ideology and Wage. Since my theory is about Orthodox Jews, I code "Secular" and "Traditional" Jews as 0, and Orthodox as 1. Traditional and Secular Jews received the same value of 0 since there is no theoretical justification for them to be less trusting in the court system, as neither group relies on "Beth Din" for private arbitration. 20 percent of the respondents self-defined as Orthodox and therefore were coded as 1.
+
+```{r Recoding Independent Variables, echo=FALSE}
+#Create new variable for Religiosity as.numeric:
+d1$Religiosity <- as.numeric(d1$Q58)
+#Mark irrelevant answers as NA:
+d1$Religiosity[d1$Religiosity==6] <- NA
+d1$Religiosity[d1$Religiosity==7] <- NA
+#Reverse the direction of values to go from 1 - secular to 5- ultra orthodox:
+d1$Religiosity <- car::recode(d1$Religiosity,
+                                           '1=5; 2=4; 3=3; 4=2; 5=1')
+#Recoding Secular and Traditional to 0, Orthodox to 1 and Ultra-Orthodox to 2:
+d1$Religiosity_binary<- d1$Religiosity
+d1$Religiosity_binary[d1$Religiosity_binary==1] <- 0
+d1$Religiosity_binary[d1$Religiosity_binary==2] <- 0
+d1$Religiosity_binary[d1$Religiosity_binary==3] <- 0
+d1$Religiosity_binary[d1$Religiosity_binary==4] <- 1
+d1$Religiosity_binary[d1$Religiosity_binary==5] <- 1
+
+
+#Ideology
+d1$Ideology <- as.numeric(d1$Q59)
+d1$Ideology[d1$Ideology == 6] <- NA
+d1$Ideology[d1$Ideology == 7] <- NA
+
+##Wage:
+#Create a new binary variable called "Avg_Wage" where 
+#individuals that earn less than the national average wage 
+#receive a value of 1, and those who earn average or higher receive 0, 
+#respondents who didn't answer receive "NA":
+d1$Avg_Wage <- as.numeric(d1$Q66)
+d1$Avg_Wage <- ifelse(d1$Avg_Wage==1, 0, ifelse(d1$Avg_Wage==2, 0,                             ifelse(d1$Avg_Wage==3, 1, ifelse(d1$Avg_Wage==4, 1, 
+ifelse(d1$Avg_Wage==5, 1, NA)))))
+```
+
+```{r}
+#Table Religiosity
+table(d1$Religiosity_binary)
+```
+
+Ideology is a variable scaling from 1 to 5, where individuals were asked how they define their ideology from 1 "Right-Wing" to 5 "Left-Wing". Answers of "Don't Know" and "Refuse" were recoded into missing values. The mean of this variable was 2.4, which suggests that most individuals identified as between Center-Right Wing to Center, in their ideology. This accurately reflects the political climate in Israel (For example, in the recent elections the two largest parties were the Right-Wing party, "Likud", and the Center party "Blue-White").
+
+```{r}
+#Table Ideology
+summary(d1$Ideology)
+```
+
+Finally, espondents were told that "the average income of an Israeli household is 14,500 NIS net per month" and were asked if their income is above, below or equal to this amount. I coded individuals who responded equal or above as 1 and individuals who responded below as 0. The data suggests that 60 percent of the respondents who answered this question earn above or equal to the average household income.
+
+```{r}
+#Table Wage
+table(d1$Avg_Wage)
+```
+
+In order to get an early indication of the possible relationships between variables and a hint of whether multicollinearity may be a potential problem, I create a correlation matrix. The matrix does not suggest that any of the variables are suspiciously over correlated. We also learn that there seems to be a negative relationship between religiosity and trust in court, and a positive relationship between wage and ideology and trust in court, as conjectured in the theoretical section.
+
+```{r Correlation Matrix, echo=FALSE}
+#Create a new data frame with variables of interest:
+newdf <- data.frame(d1$Court, d1$Religiosity_binary, d1$Ideology, d1$Avg_Wage)
+
+#Change Names of variables in new dataframe
+names(newdf)[names(newdf) == "d1.Court"] <- "Court"
+names(newdf)[names(newdf) == "d1.Religiosity_binary"] <- "Religiosity"
+names(newdf)[names(newdf) == "d1.Ideology"] <- "Ideology"
+names(newdf)[names(newdf) == "d1.Avg_Wage"] <- "Wage"
+
+#Create a correlation matrix:
+d <- na.omit(newdf) #First Get rid of Missing Data
+res <- cor(d)
+knitr::kable(tidy(round(res, 2)), digits = 3, caption = "Correlation Matrix")
+```
+
+#Missing Data
+Since this is a survey, there is a danger of attrition. We therefore need to examin our missing values to ensure that they are missing at random. For this purpose, we can graph a missing map. From the map, we learn that in fact missing values seem to be missing at random. However, there are relatively many missing values, and if we lose each observation we will be left with a little over 60 percent of the data. Hence, we need to generate new observations to fill in missing data.
+```{r Missingness, fig.height = 4, fig.width = 7, fig.align = "center"}
+#Graphing Missing data:
+missmap(newdf, legend = TRUE,
+        y.cex = 0.2, x.cex = 0.6, csvar = NULL, tsvar =
+        NULL, rank.order = TRUE, margins = c(4, 4))
+```
+
+#Multiple Imputation
+I use a software called "Amelia", developed by Garry King, in order to generate multiple imputation and draw new observations for missing values.
+```{r}
+bds <- matrix(c(2,0,20), nrow=1, ncol=3) #First we create an empty vector
+Fitamelia <- amelia(newdf, m=5, bounds = bds, max.resample = 1000) #We run amelia 
+      #for multiple imputations
+```
+
+```{r Code new dataset, include=FALSE}
+d2<-as.data.frame(Fitamelia$imputations[[5]])
+
+d2$Court[d2$Court>0.5] <- 1
+d2$Court[d2$Court<0.5] <- 0
+d2$Religiosity[d2$Religiosity>0.5] <- 1
+d2$Religiosity[d2$Religiosity<0.5] <- 0
+d2$Wage[d2$Wage>0.5] <- 1
+d2$Wage[d2$Wage<0.5] <- 0
+d2$Ideology[d2$Ideology<1] <- 1
+d2$Ideology[d2$Ideology>5] <- 5
+d2$Ideology[d2$Ideology>4.5] <- 5
+
+dd2 <- na.omit(d2)
+```
+
+#Model
+In order to test my hypotheses I create a logistic regression model where the dependent variable is trust in court. For respondent $i$, let the outcome be $y_i$ where a value of 0 indicates no trust and a value of 1 indicates trust in court. 
+
+```{r Regression}
+#Create logistic regression
+Model <- glm(Court ~ Religiosity + Ideology + Wage, data=dd2)
+knitr::kable(tidy(Model), digits = 3, caption = "Logistic Regression")
+```
+
+**Interpretation:** When we run a logistic regression it is difficult to substantially interpret the result. However, we can look at the sign of the estimates and their p-values as they indicate whether there is a positive/negative statistically significant relationship between the variables. We can therefore conclude that there is a negative and statistically significant relationship between religiosity and trust in court, a psitive and statistically significant relationship between ideology and trust in court, and a positive and statistically significant relationship between earning a household income of above the national average and trust in court. In order to discuss the predicted probability of trust in court in substantive terms, additional tests have been done.
+
+## Predicted probability of Trust in Court
+```{r Interpertation}
+values <- dd2 %>%
+  expand(Religiosity, Ideology = mean(Ideology), Wage)
+predicted <- augment(Model, newdata = values)
+predicted %<>% 
+  mutate(Wage = ifelse(Wage == 1, "Above Average", "Below Average")) %>%
+  mutate(Religiosity = ifelse(Religiosity == 1, "Orthodox", "Non-Orthodox"))
+predicted %>% 
+  select(Religiosity, Wage, .fitted) %>%
+  mutate(.fitted = round(.fitted, 1)) %>% 
+  group_by(Religiosity, Wage) %>%
+  spread(key = Religiosity, value = ".fitted") %>% 
+  knitr::kable(caption = "Probability of Trust")
+```
+
+**Interpretation:** In order to better interpret the results, we can predict the probability of trust in court based on variables of interest, while fixing other variables at their mean. Since all variables were found to be statistically significant they are all of interest. However, since ideology is an oredered variable with 5 values, it makes the most sense to fix it at its mean (Ideology=2.4). 
+
+The results suggest that: Holding ideology at its mean, when a respondent is not religious and earns a wage above the national average, the probability that they will trust court is 0.7. When a respondent is religious and earns above the national average, the probability that they will trust the court is much lower, 0.5. The differences between non-religious and religious individuals is slightly larger in respondents who earn below the national average. In this case, a respondent who is not religious and earns below the average has a 0.6 probability of trusting the court, holding ideology at its mean. A respondent who is orthodox has the lowest probability of trusting the court, 0.3.
+
+##Logit Bounds
+```{r Creating Logit Bounds, include=FALSE}
+library(mvtnorm)# for multivariate normals
+Logit_bounds <- function(Model, Wage, Religiosity, Ideology){
+  # rnorm(n) returns n draws from a normal with a given mean and sd,
+  # mvrnorm(n) returns n draws from a multivariate normal
+  # given a vector of means (i.e. our betas) and sigma, the covariance
+  predictions <- rmvnorm(n = 1000, 
+                         mean = Model$coefficients, 
+                         sigma = vcov(Model)) %>%
+    as_tibble() %>% 
+    # Add a prefix to be clear that these are our betas
+    rename_all(~str_c("beta_", .)) %>% 
+    # z = log odds (the linear combination of predictors)
+    mutate(z = `beta_(Intercept)` + beta_Wage*Wage + beta_Religiosity*Religiosity + beta_Ideology*Ideology) %>% 
+    # p = probabilty. Apply logistic function (inverse logit) to the log odds
+    mutate(p = 1/(1+exp(-z)) ) %>%
+    # Add values to the data frame
+    mutate(Wage = Wage,
+           Religiosity = Religiosity,
+           Ideology = Ideology)
+  return(predictions)
+}
+# Test out our function
+Logit_bounds(Model = Model, 
+             Wage = 1,
+             Religiosity = 1, 
+             Ideology = mean(d$Ideology)) %>%
+  glimpse()
+```
+
+```{r Plotting Logit Bounds, echo=FALSE}
+#Plotting the Logit Bounds:
+values <- d %>% 
+  expand(Wage, Religiosity, Ideology = mean(Ideology))
+predicted <- pmap_dfr(.l = values,
+                      .f = Logit_bounds, 
+                      Model = Model) 
+predicted %<>% 
+  mutate(Wage = ifelse(Wage == 1, "Above Average Wage",
+                         "Below Average Wage")) %>%
+  mutate(Religiosity = ifelse(Religiosity == 1, "Orthodox",
+                         "Non-Orthodox"))
+predicted %>%
+  ggplot() +
+  aes(x = p, 
+      fill = factor(Religiosity),
+      color = factor(Religiosity)) +
+  geom_density(alpha = .5, trim = T) +
+  facet_wrap(.~ Wage, 
+             ncol = 1,
+             scales = "free_y") +
+  scale_color_discrete()
+```
+
+```{r CI}
+#Intervals of the distribution:
+values <- d %>% 
+  expand(Wage, Religiosity, Ideology = round(mean(Ideology),2))
+predicted <- pmap_dfr(.l = values, 
+                      .f = Logit_bounds, 
+                      Model = Model) 
+predicted %<>% 
+  mutate(Wage = ifelse(Wage == 1, "Above Average",
+                         "Below Average")) %>%
+  mutate(Religiosity = ifelse(Religiosity == 1, "Orthodox", 
+                         "Non-Orthodox"))
+predicted %>%
+  group_by(Wage, Religiosity, Ideology) %>% 
+  summarise(lower = round(quantile((p), probs = .025), 2),
+            upper = round(quantile((p), probs = .975),2),
+            mean = round(mean(p), 2)) %>% 
+  arrange(mean) %>%
+  knitr::kable(caption = "Predicted probabilities of Trust, 
+               with bounds")
+```
+
+**Interpretation:** We can estimate uncertainty of our results by sampling the assumed distribution of our parameters. The central limit theorem shows that, with a large enough sample and bounded variance, we can simulate the distribution of parameters with draws from a multivariate normal distribution. We can thus write a function for a large number of random draws from a multivariate normal distribution, fixing our model estimates. The table indicates the confidence intervals of the probabilities discussed in the previous section, where lower suggests lower bound and upper suggests upper bound of the probabilities. 
+
+The 95% intervals for the probability of trust for orthodox respondents with an income below the national average (with ideology held at its mean), is between 0.56 and 0.6. This suggests that there is a 56 to 60 percent point chance that the respondent will trust the court. This result is higher than the predicted probability analyzed above, which suggests that the model may be over predicting the value 1, I further discuss this in the next sections.
+
+The 95% intervals for the probability of trust for orthodox respondents with an income above the national average (with ideology held at its mean), is between 0.6 and 0.64. This suggests that there is a 60 to 64 percent point chance that the respondent will trust the court, this result is higher than for religious individuals with low income. The 95% intervals for the probability of trust for non-orthodox respondents with an income below the national average (with ideology held at its mean), is between 0.63 and 0.65. This suggests that there is a 63 to 65 percent point chance that the respondent will trust the court. 
+
+Finally, the 95% intervals for the probability of trust for non-orthodox respondents with an income above the national average (with ideology held at its mean), is between 0.67 and 0.7. This suggests that there is a 67 to 70 percent point chance that the respondent will trust the court. 
+
+Indeed, we learn that the probability that respondents will trust the court increases from orthodox to non-orthodox and from those who earn below average to those who earn above. However, these differences seem to be rather small between the groups. 
+
+#Fit
+As suggested in the previous section, there are reasons to suspect that the model suffers from a type I error. We can detect this whether or not our model correctly predicts the dependent variable, on our own data. We learn that, indeed, the model over estimates the prediction (or, predicts "trust" when in fact there is no trust). 
+
+##Classification table
+In order to test the possibility of a type 2 error, we can create a classification table. We learn that our model predicted 1 (Trust) correctly 83 percent of the cases. On the other hand, it predicted 0 (no Trust) correctly only 55 percent of the cases. This suggests that while our model is not sensitive.
+
+```{r classification table, echo=FALSE}
+predicted2 <- plogis(predict(Model, dd2))
+optCutOff <- optimalCutoff(dd2$Court, predicted2)[1]
+optCutOff
+confusionMatrix(dd2$Court, predicted2, threshold = optCutOff)
+```
+
+##Receiver Operating Characteristic
+We can further examine this issue by plotting the area under the curve. This further confirms this concern. 
+
+```{r Plotting OLS}
+plotROC(dd2$Court, predicted2)
+```
+
+There is reason to suspect that this is an issue of not enough *power* due to a number of reasons. First, we do not have a large number of observations, especially of Orthodox individuals (they are only 20 percent of our sample). Second, we may also have too small of a variation in our dependent variable (37 percent selected "No Trust"). Third, the measurement for wage does not capture enough of the variation between individuals. Finally, our model may be missing other variables that could further explain trust in the court system such as levels of corruption in the area of residence, which were not coded in this dataset.
+
+#Bibliography:
+
+Arian, A., Atmor, N., & Hadar, Y. (2007). The 2007 Israeli democracy index: auditing Israeli democracy cohesion in a divided society. Israel Democracy Institute.
+
+
+Devos, T., Spini, D., & Schwartz, S. H. (2002). Conflicts among human values and trust in institutions. British Journal of Social Psychology, 41(4), 481-494.
+
+
+Hermann, T., Heller, E., Atmor, N., & Lebel, Y. (2013). The Israeli democracy index 2013. Israeli Democracy Index.
+
+Marien, S., & Hooghe, M. (2011). Does political trust matter? An empirical investigation into the relation between political trust and support for law compliance. European Journal of Political Research, 50(2), 267-291.
+
+Tsfati, Y., Tukachinsky, R., & Peri, Y. (2009). Exposure to news, political comedy, and entertainment talk shows: Concern about security and political mistrust. International Journal of Public Opinion Research, 21(4), 399-423.
+
+
