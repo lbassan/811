@@ -260,7 +260,14 @@ knitr::kable(tidy(model1), digits = 3, caption = &quot;Linear Regression model 1
 <h1>Testing H2</h1>
 <pre class="r"><code>#Upload the dataset 2, &quot;shame2&quot;, which indicates, for each of the shaming instances between 2005-2010, how many were politicized. 
 
-#In order to code politicized shaming I rely on the coding scheme of: &quot;Terman, R., &amp; Voeten, E. (2018). The relational politics of shame: Evidence from the universal periodic review. The Review of International Organizations, 13(1), 1-23&quot;. The variable ranges from 0 to 1.
+#There are 443 observations, where each is one shaming instance conducted in a given year by a given IO. For each observation I indivate the level of politicized shaming.
+
+#In order to code politicized shaming I rely on the coding scheme of: &quot;Terman, R., &amp; Voeten, E. (2018). The relational politics of shame: Evidence from the universal periodic review. The Review of International Organizations, 13(1), 1-23&quot;. The variable ranges from 0 to 1. The variable is an average (standardize) of:
+
+#propotion of member states that share military alliance with target state.
+#proportion of member states that weigh in arms with target state.
+#proportion of total aid receipts from member states to target.
+#proportion of total aid receipts from target to member state.
 
 shame2 &lt;- read_csv(&quot;shame2.csv&quot;)
 
